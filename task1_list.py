@@ -1,6 +1,6 @@
 class Node:
 
-    __slots__ = ("value", "prev", "next")
+    __slots__ = ("next", "prev", "value")
 
     def __init__(self, value):
         self.value = value
