@@ -1,33 +1,26 @@
-from collections import OrderedDict
-
+from task3_hashtable import HashTable
 
 class LRUCache:
-    def __init__(self, capacity: int):
-        if capacity <= 0:
-            raise ValueError("Capacity must be positive")
-        self.capacity = capacity
-        self.cache = OrderedDict()
+    def __init__(self, capacity):
+        self.cache = HashTable(capacity=max(8, capacity*2)) # ← was dict {}
+        self.head = _Node() # MRU
+        self.tail = _Node() # LRU
 
     def get(self, key):
-        if key not in self.cache:
-            return None
-        self.cache.move_to_end(key)
-        return self.cache[key]
+        node = self.cache.get(key) # O(1) HashTable lookup
+        if not node: return -1
+        self._move_to_head(node)   # O(1) DLL
+        return node.value
 
-    def put(self, key, value) -> None:
-        if key in self.cache:
-            self.cache.move_to_end(key)
-            self.cache[key] = value
+    def put(self, key, value):
+        node = self.cache.get(key)
+        if node:
+            node.value = value
+            self._move_to_head(node)
         else:
-            if len(self.cache) >= self.capacity:
-                self.cache.popitem(last=False)
-            self.cache[key] = value
-
-    def __len__(self) -> int:
-        return len(self.cache)
-
-    def __repr__(self):
-        return str(self.cache)
-
-    def clear(self) -> None:
-        self.cache.clear()
+            new = _Node(key, value)
+            self.cache.put(key, new)      # store Node in HashTable
+            self._add_to_head(new)
+            if len(self.cache) > self.capacity:
+                lru = self._pop_tail()
+                self.cache.delete(lru.key) # evict from BOTH structures
